@@ -172,7 +172,7 @@ static const clock_scale_t clock_setup = {
 	.apb1_frequency = 42000000,
 	.apb2_frequency = 84000000,
 };
-
+#if !defined(TARGET_HW_NAYAN_FSC)
 static uint32_t
 board_get_rtc_signature()
 {
@@ -202,7 +202,7 @@ board_set_rtc_signature(uint32_t sig)
 	RCC_BDCR &= RCC_BDCR_RTCEN;
 	PWR_CR &= ~PWR_CR_DBP;
 }
-
+#endif
 static bool
 board_test_force_pin()
 {
@@ -691,7 +691,7 @@ main(void)
 	/* Enable the FPU before we hit any FP instructions */
 	SCB_CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2)); /* set CP10 Full Access and set CP11 Full Access */
 
-#if defined(BOARD_POWER_PIN_OUT)
+#if defined(BOARD_POWER_PIN_OUT) & !defined(TARGET_HW_NAYAN_FSC)
 
 	/* Here we check for the app setting the POWER_DOWN_RTC_SIGNATURE
 	 * in this case, we reset the signature and wait to die
@@ -714,6 +714,8 @@ main(void)
 	 * Check the force-bootloader register; if we find the signature there, don't
 	 * try booting.
 	 */
+#if !defined(TARGET_HW_NAYAN_FSC)
+
 	if (board_get_rtc_signature() == BOOT_RTC_SIGNATURE) {
 
 		/*
@@ -732,6 +734,7 @@ main(void)
 		 */
 		board_set_rtc_signature(0);
 	}
+#endif
 
 #ifdef BOOT_DELAY_ADDRESS
 	{
@@ -808,16 +811,16 @@ main(void)
 	if (try_boot) {
 
 		/* set the boot-to-bootloader flag so that if boot fails on reset we will stop here */
-#ifdef BOARD_BOOT_FAIL_DETECT
+#if defined(BOARD_BOOT_FAIL_DETECT) & !defined(TARGET_HW_NAYAN_FSC)
 		board_set_rtc_signature(BOOT_RTC_SIGNATURE);
 #endif
 
 		/* try to boot immediately */
 		jump_to_app();
-
+#if !defined(TARGET_HW_NAYAN_FSC)
 		// If it failed to boot, reset the boot signature and stay in bootloader
 		board_set_rtc_signature(BOOT_RTC_SIGNATURE);
-
+#endif
 		/* booting failed, stay in the bootloader forever */
 		timeout = 0;
 	}
@@ -861,7 +864,7 @@ main(void)
 #endif
 
 		/* set the boot-to-bootloader flag so that if boot fails on reset we will stop here */
-#ifdef BOARD_BOOT_FAIL_DETECT
+#if defined(BOARD_BOOT_FAIL_DETECT) & !defined(TARGET_HW_NAYAN_FSC)
 		board_set_rtc_signature(BOOT_RTC_SIGNATURE);
 #endif
 
